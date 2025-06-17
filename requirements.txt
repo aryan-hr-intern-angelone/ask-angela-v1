@@ -1,0 +1,19 @@
+langchain-google-genai
+langchain-cohere
+langchain-community
+faiss-cpu
+python-dotenv
+slackclient
+slack_bolt
+slackeventsapi
+matplotlib
+umap-learn
+pandas
+numpy
+boto3
+semantic-router
+sqlalchemy
+rank_bm25
+requests
+psycopg[binary, pool]
+fastembed

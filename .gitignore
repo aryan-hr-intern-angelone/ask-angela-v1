@@ -1,0 +1,10 @@
+.venv
+.env
+__pycache__
+credentials.json
+faiss_index
+database.db
+.DS_Store
+logs
+main.py
+test.py
