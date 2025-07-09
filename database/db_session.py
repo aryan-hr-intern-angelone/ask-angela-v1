@@ -1,4 +1,4 @@
-from database.db import engine, User, ChatHistory
+from database.db import engine 
 from sqlalchemy.orm import sessionmaker
 
 Session = sessionmaker(bind=engine)

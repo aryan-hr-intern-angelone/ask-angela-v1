@@ -1,6 +1,16 @@
 import random
 from typing import Literal
 
+def get_loading_text():
+    return random.choice([
+        "*Searching...* :mag:",
+        "*Looking that up...* :mag_right:",
+        "*Exploring the policies...* :compass:",
+        "*Generating Response...* :speech_balloon:",
+        "*Processing you query...* :thought_balloon:",
+        "*Reviewing Policies...* :books:"
+    ])
+
 def get_feedback_repsponse():
     return random.choice([
         "Did I get this right? Your feedback helps me get better!",

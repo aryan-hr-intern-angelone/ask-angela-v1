@@ -1,12 +1,13 @@
 import re
 from config.env import env
 from slack_bolt import App
-from utils.rag import user_input
+from lib.rag import user_input
+from lib.semantics import query_rl
 from database.db import User, ChatHistory
 from slack_sdk.errors import SlackApiError
 from database.db_session import get_session
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-from kit.slack_blocks import get_hello_block, get_response_block, get_response_block_with_actions, get_actions_block, get_feedback_block
+from slack_app.blocks import get_hello_block, get_response_block, get_response_block_with_actions, get_actions_block, get_feedback_block, get_loading_block
 
 app = App(token=env.slack.SLACK_TOKEN)
 handler = SocketModeHandler(app, env.slack.SLACK_SOCKET_TOKEN)
@@ -71,6 +72,21 @@ def handle_mention(payload, client):
         user_query += thread_chat
 
     if user_query:
+        query_type = query_rl(user_query)
+        
+        loader_activated = False
+        if query_type.name != 'chitchat':
+            loader_activated = True
+            loading_blocks = get_loading_block()
+            message = message = client.chat_postMessage(
+                channel=channel_id,
+                user=user_id,
+                thread_ts = thread_ts,
+                text="Loading...",
+                blocks=loading_blocks
+            )
+            print(message)
+            
         data = user_input(user_query, channel_id, user_id)
         quoted_response = "\n".join(f"> {line}" for line in data.response.splitlines())
         source_str = ", ".join(data.sources)
@@ -103,20 +119,30 @@ def handle_mention(payload, client):
             feedback_blocks = get_feedback_block(type=data.response_type)
 
         try:
-            message = client.chat_postMessage(
-                channel=channel_id,
-                thread_ts=thread_ts,
-                blocks=response_block
-            )
             
-            print(message)
-            
-            if data.query_type != 'chitchat':
+            if loader_activated:
+                client.chat_update(
+                    channel=channel_id,
+                    ts=message['ts'] if message else thread_ts,
+                    blocks=response_block
+                )
+                
+                print("Sending the feedback block")
+                
                 client.chat_postEphemeral(
                     channel=channel_id,
                     user=user_id,  
-                    thread_ts=thread_ts,  
+                    thread_ts=thread_ts, 
+                    text="Please share your feedback", 
                     blocks=feedback_blocks  
+                )
+            else:
+                client.chat_postMessage(
+                    channel=channel_id,
+                    user=user_id,
+                    thread_ts=thread_ts,
+                    text=data.response,
+                    blocks=response_block
                 )
         except SlackApiError as e:
             print("Error sending message: {}".format(e.response["error"]))
@@ -126,9 +152,21 @@ def handle_message(payload, client):
     channel_id = payload["channel"]
     user_id = payload["user"]
     user_query = payload["text"]
-    thread_ts = payload.get("thread_ts", "")
 
     if user_query:
+        loader_activated = False
+        query_type = query_rl(user_query)
+        
+        if query_type.name != 'chitchat':
+            loader_activated = True
+            loading_blocks = get_loading_block()
+            message = client.chat_postMessage(
+                channel=channel_id,
+                user=user_id,
+                text="Loading...",
+                blocks=loading_blocks
+            )
+        
         data = user_input(user_query, channel_id, user_id)
         quoted_response = "\n".join(f"> {line}" for line in data.response.splitlines())
         source_str = ", ".join(data.sources)
@@ -157,19 +195,25 @@ def handle_message(payload, client):
         response_blocks = []
         
         if data.query_type != 'chitchat':
-            if not data.is_followup:
-                response_blocks = get_response_block_with_actions(quoted_response, data.response_type)
+            response_blocks = get_response_block_with_actions(quoted_response, data.response_type)
         else:
             response_blocks = get_response_block(quoted_response)
 
         try:
-            client.chat_postMessage(
-                channel=channel_id,
-                thread_ts=thread_ts,
-                text=data.response,
-                blocks=response_blocks
-            )
-                
+            if loader_activated:
+                client.chat_update(
+                    channel=channel_id,
+                    ts=message['ts'],
+                    text=data.response,
+                    blocks=response_blocks
+                )
+            else:
+                client.chat_postMessage(
+                    channel=channel_id,
+                    user=user_id,
+                    text=data.response,
+                    blocks=response_blocks
+                )
         except SlackApiError as e:
             print("Error sending message: {}".format(e.response["error"]))
 
@@ -238,6 +282,4 @@ def handle_thumbs_up(ack, body, client):
         client.chat_postMessage(
             channel=channel_id,
             blocks=action_block
-        ) 
-
-handler.start()
+        )

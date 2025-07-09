@@ -1,6 +1,7 @@
 import enum
 from datetime import datetime
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Enum, ForeignKey
 
 engine = create_engine('sqlite:///database.db', echo=True)
@@ -14,7 +15,7 @@ class User(Base):
     lname = Column(String)
     slack_username = Column(String)
     email = Column(String)
-    created_at = Column(DateTime, default=datetime.now())
+    created_at = Column(DateTime, default=current_timestamp())
     
 class ChatHistory(Base):
     __tablename__ = "chat_history"
@@ -26,7 +27,7 @@ class ChatHistory(Base):
     docs_reffered = Column(String, nullable=True)
     pos_feedback = Column(Boolean, default=False)
     neg_feedback = Column(Boolean, default=False)
-    timestamp = Column(DateTime, default=datetime.now())
+    timestamp = Column(DateTime, default=current_timestamp())
     
 # class Files(Base):
 #     __tablename__ = "files"

@@ -4,6 +4,7 @@ from langchain.vectorstores.utils import DistanceStrategy
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from dataclasses import dataclass
 from config.env import env
 
 # def get_pdf_text(pdf_stream):
@@ -30,35 +31,40 @@ from config.env import env
 #         print(e)
 #     # return text
 
-def get_splitter_by_token_count(token_count):
-    seprators = ["\n\n", "\n", ".", " "]
+@dataclass
+class ChunkingStrategy():
+    chunk_size: str
+    chunk_overlap: str
+    
+def get_chunking_configuration(token_count: float):
     if token_count < 500:
-        return RecursiveCharacterTextSplitter(chunk_size=token_count, chunk_overlap=0)
+        return ChunkingStrategy(token_count, 0)
     elif token_count < 1000:
-        return RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=50, separators=seprators)
+        return ChunkingStrategy(300, 50)
     elif token_count < 2000:
-        return RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=100, separators=seprators)
+        return ChunkingStrategy(512, 100)
     elif token_count < 4000:
-        return RecursiveCharacterTextSplitter(chunk_size=768, chunk_overlap=128, separators=seprators)
+        return ChunkingStrategy(768, 128)
     elif token_count < 7000:
-        return RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=128, separators=seprators)
+        return ChunkingStrategy(512, 128)
     elif token_count < 12000:
-        return RecursiveCharacterTextSplitter(chunk_size=384, chunk_overlap=128, separators=seprators)
+        return ChunkingStrategy(384, 128)
     else:
-        return RecursiveCharacterTextSplitter(chunk_size=256, chunk_overlap=128, separators=seprators)
+        return ChunkingStrategy(236, 128)
     
 def get_text_chunks(text):
-    # text_splitter = RecursiveCharacterTextSplitter(
-    #     chunk_size=1024,
-    #     chunk_overlap=128,
-    #     separators=["\n\n", "\n", ".", " "]
-    # )
-    text_splitter = get_splitter_by_token_count(len(text)/4)
+    approx_tokens = len(text)/4
+    config = get_chunking_configuration(approx_tokens)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=config.chunk_size,
+        chunk_overlap=config.chunk_overlap,
+        separators=["\n\n", "\n", ".", " "]
+    )
     
     chunks = text_splitter.split_text(text)
-    return chunks
+    return chunks, config, approx_tokens
 
-def create_vector_store_full_docs(text, file_id, file_name):
+def create_vector_store_full_docs(text: str, file_id: str, file_name: str, approx_tokens: float):
     index_dir = env.faiss.INDEX_DIR
     full_text_path = env.faiss.FULL_TEXT_PATH
     
@@ -70,7 +76,8 @@ def create_vector_store_full_docs(text, file_id, file_name):
         page_content=text,
         metadata={
             "source_id": file_id,
-            "source": file_name
+            "source": file_name,
+            "total_tokens": approx_tokens
         }
     )]
     
@@ -84,7 +91,13 @@ def create_vector_store_full_docs(text, file_id, file_name):
         print("Index for full text store not found, Creating one...")
         new_store.save_local(index_file)
     
-def create_vector_store(chunks, file_id, file_name):
+def create_vector_store(
+    chunks: str, 
+    file_id: str, 
+    file_name: str, 
+    approx_tokens: float,
+    config: ChunkingStrategy
+):
     try:
         index_dir = env.faiss.INDEX_DIR
         chunks_path = env.faiss.TEXT_CHUNK_PATH
@@ -93,7 +106,16 @@ def create_vector_store(chunks, file_id, file_name):
         index_file = os.path.join(index_dir, chunks_path)
 
         embeddings = GoogleGenerativeAIEmbeddings(model=env.models.EMBEDDING_MODEL)
-        documents = [Document(page_content=chunk, metadata={"source_id": file_id, "source": file_name}) for chunk in chunks]
+        
+        # TODO: Add the chunk word count, and remove the chunk_size, chunk_overlap and total_token
+        documents = [Document(
+            page_content=chunk, 
+            metadata={
+                "source_id": file_id, 
+                "source": file_name, 
+                "total_token": approx_tokens
+            }) 
+        for chunk in chunks]
 
         new_store = FAISS.from_documents(
             documents,
@@ -110,3 +132,27 @@ def create_vector_store(chunks, file_id, file_name):
             new_store.save_local(index_file)
     except Exception as e:
         print(e)
+        
+def delete_vector_store(file_name: str):
+    try:
+        index_dir = env.faiss.INDEX_DIR
+        chunks_path = env.faiss.TEXT_CHUNK_PATH
+        full_text_path = env.faiss.FULL_TEXT_PATH
+        
+        embeddings = GoogleGenerativeAIEmbeddings(model=env.models.EMBEDDING_MODEL)
+        chunks_store = FAISS.load_local(f"{index_dir}/{chunks_path}", embeddings=embeddings, allow_dangerous_deserialization=True)
+        full_text_store = FAISS.load_local(f"{index_dir}/{full_text_path}", embeddings=embeddings, allow_dangerous_deserialization=True)
+        
+        chunks_doc_ids = [key for key, val in chunks_store.docstore._dict.items() if val.metadata.get("source") == file_name]
+        full_text_doc_ids = [key for key, val in full_text_path.docstore._dict.items() if val.metadata.get("source") == file_name]
+        
+        chunks_store.delete(ids=chunks_doc_ids)
+        full_text_store.delete(ids=full_text_doc_ids)
+        
+        chunks_store.save_local(f"{index_dir}/{chunks_path}")
+        full_text_store.save_local(f"{index_dir}/{full_text_store}")
+        
+        print(f"Succesfully deleted {file_name} from both chunks store and full text store")
+    except Exception as e:
+        print(f"Error while removing {file_name} from the vector store")
+        raise e

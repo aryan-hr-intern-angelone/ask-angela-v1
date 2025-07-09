@@ -1,5 +1,5 @@
 from typing import Literal
-from kit.slack_utils import get_nocontext_response, get_feedback_repsponse
+from slack_app.utils import get_nocontext_response, get_feedback_repsponse, get_loading_text
 
 def get_hello_block(fname: str):
     return [{
@@ -7,6 +7,16 @@ def get_hello_block(fname: str):
         "text": {
             "type": "mrkdwn",
             "text": f"Hi {fname}, Welcome to Ask Angela, your assistant for HR queries. Ask any question and get answers in seconds! Please note that Ask Angela is still in development. If you believe an answer may be incorrect, we recommend verifying it with your HRBP directly."
+        }
+    }]
+    
+def get_loading_block():
+    loading_response = get_loading_text()
+    return [{
+        "type": "section",
+        "text": {
+            "type": "mrkdwn", 
+            "text": f"> {loading_response}"
         }
     }]
 
@@ -39,20 +49,20 @@ def get_response_block_with_actions(response: str, type: Literal["no_context", N
                 }
             },
             {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Raise Ticket",
-                                "emoji": True
-                            },
-                            "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
-                            "action_id": "raise_ticket_click"
-                        }
-                    ]
-                }
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Raise Ticket",
+                            "emoji": True
+                        },
+                        "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
+                        "action_id": "raise_ticket_click"
+                    }
+                ]
+            }
         ])
     else:
         default_response = get_feedback_repsponse()

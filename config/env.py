@@ -34,9 +34,16 @@ class ModelsConfig:
 @dataclass
 class AWSConfig:
     AWS_PROFILE_NAME = os.environ.get("AWS_PROFILE_NAME")
+    RDS_CONNECTION_URI = os.environ.get("RDS_CONNECTION_URI")
+    RDS_PORT = os.environ.get("RDS_PORT")
+    RDS_USERNAME = os.environ.get("RDS_USERNAME")
+    RDS_PASSWORD = os.environ.get("RDS_PASSWORD")
+    RDS_DATABASE_NAME = os.environ.get("RDS_DATABASE_NAME")
     DATAMART_HOST = os.environ.get("DATAMART_HOST")
     S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME")
     S3_BUCKET_RESOURCE_NAME = os.environ.get("S3_BUCKET_RESOURCE_NAME")
+    AWS_REGION = os.environ.get("AWS_REGION_NAME")
+    SQS_URL = os.environ.get("SQS_URL")
     
 @dataclass
 class DarwinboxConfig:
@@ -55,7 +62,7 @@ class FAISSConfig:
 @dataclass
 class Config:
     slack: SlackConfig = field(default_factory=SlackConfig)
-    provider: InfrenceProviderConfig =field(default_factory=InfrenceProviderConfig)
+    provider: InfrenceProviderConfig = field(default_factory=InfrenceProviderConfig)
     models: ModelsConfig = field(default_factory=ModelsConfig)
     aws: AWSConfig = field(default_factory=AWSConfig)
     darwinbox: DarwinboxConfig = field(default_factory=DarwinboxConfig)

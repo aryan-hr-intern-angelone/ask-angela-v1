@@ -5,6 +5,8 @@ chitchat = Route(
     name='chitchat',
     utterances=[
         "How's the weather today?",
+        "need your help",
+        "I need some information",
         "What's up [name]",
         "How was your weekend?",
         "Hello [name]",
@@ -56,26 +58,45 @@ leaves = Route(
     score_threshold=0.8
 )
 
+hirearchy = Route(
+    name="hirearchy",
+    utterances=[
+       "who is my manager",
+       "who is my HRBP",
+       "who is my CXO",
+       "what is my employee hirearchy"
+    ],
+    score_threshold=0.75
+)
+
+valid_context = Route(
+    name="valid_context",
+    utterances=[
+       "I can help with that. What specific information are you looking for?"
+    ]
+)
+
 no_context = Route(
     name='no_context',
     utterances = [
-        "The policies do not mention whether you can ...",
-        "I don't have specific information about ...", 
-        "I'm unable to provide details on this particular question.",
+        "The policies do not mention whether",
+        "I don't have specific information about", 
+        "policies do not mention specific information about",
+        "I'm unable to provide details on this particular question",
         "I don't have specific information about that topic available at the moment.",
         "I’m not sure about that. My data doesn’t cover this topic.",
         "I’m sorry, I don’t see any info on that in the current documents.",
         "I am sorry I do not have the",
-        "I cannot help you with",
+        "I cannot help with",
     ],
     score_threshold=0.74
 )
 
-query_routes = [chitchat, leaves]
-response_routes = [no_context]
+query_routes = [chitchat, leaves, hirearchy]
+response_routes = [no_context, valid_context]
 
 dense_encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en")
-sparse_encoder = BM25Encoder(k1=2.0, b=0.5)
+sparse_encoder = BM25Encoder(k1=2.0, b=0.75)
 
 query_rl = HybridRouter(
     routes=query_routes, 

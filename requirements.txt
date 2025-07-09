@@ -17,3 +17,6 @@ rank_bm25
 requests
 psycopg[binary, pool]
 fastembed
+flashrank
+fastapi
+uvicorn[standard]
