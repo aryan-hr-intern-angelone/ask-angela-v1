@@ -121,8 +121,8 @@ def get_feedback_block(type: Literal["no_context", None] = None):
                             "text": "Raise Ticket",
                             "emoji": True
                         },
-                        "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
-                        "action_id": "raise_ticket_click"
+                        # "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
+                        "action_id": "open_form_button"
                     }
                 ]
             }
