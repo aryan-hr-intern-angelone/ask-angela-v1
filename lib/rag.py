@@ -1,7 +1,8 @@
 from langchain_community.vectorstores import FAISS
 from langchain.prompts import PromptTemplate
-from langchain.schema import Document
 from langchain.chains import ConversationalRetrievalChain
+from langchain.schema import Document
+from config.logger import logger
 from langchain_community.vectorstores.utils import DistanceStrategy
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
@@ -15,7 +16,9 @@ from pydantic import BaseModel, Field
 from langchain.output_parsers import PydanticOutputParser
 from typing import Literal
 from dataclasses import dataclass
-from config.logger import logger
+# from langchain_community.document_compressors import FlashrankRerank
+# from langchain_core.retrievers import BaseRetriever
+# from langchain.retrievers import ContextualCompressionRetriever
 from collections import Counter
 from langchain_community.retrievers import BM25Retriever
 from pydantic import Field
@@ -29,6 +32,82 @@ class RAGResponse:
     query_type: str
     response_type: str
     
+# class HybridRetriever(BaseRetriever):
+#     chunk_store: FAISS = Field(...)
+#     sources: list[str] = Field(...)
+#     k: int = Field(default=10)
+#     lambda_mult: float = Field(default=0.0)
+    
+#     def __init__(self, chunk_store: FAISS, sources: list[str], k: int = 10, lambda_mult: float = 0.0):
+#         super().__init__(
+#             chunk_store = chunk_store,
+#             sources = sources,
+#             k = k,
+#             lambda_mult = lambda_mult
+#         ) 
+        
+#     def _get_relevant_documents(self, query: str):
+#         return self.get_docs(query)
+    
+#     def get_docs(self, query: SystemError):
+#         similarity_docs = self._get_similarity_docs(query)
+#         mmr_docs = self._get_mmr_docs(query)
+        
+#         merged_docs = self._merge_docs(similarity_docs, mmr_docs)
+#         return merged_docs
+    
+#     def _get_search_filter(self):
+#         filter = {
+#             "k": self.k,
+#             "filter": {
+#                 "source": {
+#                     "$in": self.sources
+#                 }
+#             }
+#         }
+        
+#         if self.lambda_mult != 0:
+#             filter["lambda_mult"] = self.lambda_mult
+            
+#         return filter
+    
+#     def _get_similarity_docs(self, query: str):
+#         search_kwargs = self._get_search_filter()
+#         retriever = self.chunk_store.as_retriever(
+#             search_type="similarity",
+#             search_kwargs=search_kwargs
+#         )
+#         similarity_docs = retriever.invoke(query)
+#         return similarity_docs
+    
+#     def _get_mmr_docs(self, query: str):
+#         search_kwargs = self._get_search_filter()
+#         retriever = self.chunk_store.as_retriever(
+#             search_type="mmr",
+#             search_kwargs=search_kwargs
+#         )
+#         mmr_docs = retriever.invoke(query)
+#         return mmr_docs
+    
+#     def _merge_docs(self, similarity_docs, mmr_docs):
+#         seen_doc = set()
+#         merged_docs = []
+        
+#         for doc in similarity_docs:
+#             content_hash = hash(doc.page_content)
+#             if content_hash not in seen_doc:
+#                 seen_doc.add(content_hash)
+#                 doc.metadata["reterival_method"] = "similarity"
+#                 merged_docs.append(doc)
+                
+#         for doc in mmr_docs:
+#             content_hash = hash(doc.page_content)
+#             if content_hash not in seen_doc:
+#                 seen_doc.add(content_hash)
+#                 doc.metadata["reterival_method"] = "mmr"
+#                 merged_docs.append(doc)
+                
+#         return merged_docs
     
 session = get_session()
     
@@ -304,6 +383,7 @@ def user_input(
     )
     
     docs = retriever.invoke(user_question)
+    print(docs)
 
     reranked_docs = reranker.rerank(
         documents=docs, 
@@ -325,7 +405,22 @@ def user_input(
         )
         for doc in reranked_docs
     ]
+        
+    # retriever = HybridRetriever(
+    #     chunk_store=chunk_store,
+    #     sources=[file for file in sources]
+    # )
+    
+    # docs = retriever.get_docs(user_question) 
+    # ranker = Ranker(model_name="ms-marco-MultiBERT-L-12")
+    
+    # compressor = FlashrankRerank(model="ms-marco-MultiBERT-L-12", top_n=5)
+    
+    # comp_retriever = ContextualCompressionRetriever(
+    #     base_compressor=compressor, base_retriever=retriever
+    # )
 
+    # context = comp_retriever.invoke(user_question)
 
     chain = get_conversational_chain(
         retriever, 
