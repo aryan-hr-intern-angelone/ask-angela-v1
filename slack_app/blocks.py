@@ -112,20 +112,20 @@ def get_feedback_block(type: Literal["no_context", None] = None):
                 }
             },
             {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Raise Ticket",
-                                "emoji": True
-                            },
-                            "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
-                            "action_id": "raise_ticket_click"
-                        }
-                    ]
-                }
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Raise Ticket",
+                            "emoji": True
+                        },
+                        "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
+                        "action_id": "raise_ticket_click"
+                    }
+                ]
+            }
         ]
     else:
         default_response = get_feedback_repsponse()
@@ -173,20 +173,20 @@ def get_actions_block(type: Literal["thumbs_up", "thumbs_down"]):
                 }
             },
             {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Raise Ticket",
-                                "emoji": True
-                            },
-                            "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
-                            "action_id": "raise_ticket_click"
-                        }
-                    ]
-                }
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Raise Ticket",
+                            "emoji": True
+                        },
+                        "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
+                        "action_id": "open_form_button"
+                    }
+                ]
+            }
         ]
     else:
         return [
