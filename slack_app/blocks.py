@@ -58,8 +58,8 @@ def get_response_block_with_actions(response: str, type: Literal["no_context", N
                             "text": "Raise Ticket",
                             "emoji": True
                         },
-                        "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
-                        "action_id": "raise_ticket_click"
+                        # "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
+                        "action_id": "open_form_button"
                     }
                 ]
             }
@@ -182,7 +182,7 @@ def get_actions_block(type: Literal["thumbs_up", "thumbs_down"]):
                             "text": "Raise Ticket",
                             "emoji": True
                         },
-                        "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
+                        # "url": "https://hrsupport.angelone.in/hc/en-us/requests/new?ticket_form_id=5893162753309",
                         "action_id": "open_form_button"
                     }
                 ]
@@ -195,6 +195,146 @@ def get_actions_block(type: Literal["thumbs_up", "thumbs_down"]):
                 "text": {
                     "type": "mrkdwn",
                     "text": "Thank you so much for your positive feedback."
+                }
+            }
+        ]
+        
+def get_form_blocks():
+    return [
+            {
+                "type": "input",
+                "block_id": "form_category",
+                "label": {
+                    "type": "plain_text",
+                    "text": "Please choose your issue below"
+                },
+                "element": {
+                    "type": "static_select",
+                    "action_id": "dropdown_action",
+                    "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select an option"
+                    },
+                    "options": [
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Employee Greviences"
+                            },
+                            "value": "employee_greviences"
+                        },
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": "HR Assist"
+                            },
+                            "value": "hr_assist"
+                        }
+                    ],
+                    "initial_option": {
+                        "text": {
+                            "type": "plain_text",
+                            "text": "HR Assist"
+                        },
+                        "value": "hr_assist"
+                    }
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "request_category",
+                "label": {
+                    "type": "plain_text",
+                    "text": "HR Service Category"
+                },
+                "element": {
+                    "type": "static_select",
+                    "action_id": "dropdown_action",
+                    "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select an option"
+                    },
+                    "options": [
+                        {
+                            "text": {
+                            "type": "plain_text",
+                            "text": "Attendence and Leave"
+                            },
+                            "value": "attendence_and_leave"
+                        },
+                    ],
+                    "initial_option": {
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Attendence and Leave"
+                        },
+                        "value": "attendence_and_leave"
+                    }
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "request_sub_category",
+                "label": {
+                    "type": "plain_text",
+                    "text": "Service Sub Category"
+                },
+                "element": {
+                    "type": "static_select",
+                    "action_id": "dropdown_action",
+                    "placeholder": {
+                        "type": "plain_text",
+                        "text": "Select an option"
+                    },
+                    "options": [
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Clock-In/Clock-Out Issue"
+                            },
+                            "value": "clock_in_and_out_issue"
+                        },
+                    ],
+                    "initial_option": {
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Clock-In/Clock-Out Issue"
+                        },
+                        "value": "clock_in_and_out_issue"
+                    }
+                }
+            }, 
+            {
+                "type": "input",
+                "block_id": "subject",
+                "label": {
+                    "type": "plain_text",
+                    "text": "Subject"
+                },
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "feedback_input",
+                    "placeholder": {
+                        "type": "plain_text",
+                        "text": "Write your feedback here..."
+                    }
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "discription",
+                "label": {
+                    "type": "plain_text",
+                    "text": "Discription"
+                },
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "feedback_input",
+                    "multiline": True,
+                    "placeholder": {
+                        "type": "plain_text",
+                        "text": "Write your feedback here..."
+                    }
                 }
             }
         ]
