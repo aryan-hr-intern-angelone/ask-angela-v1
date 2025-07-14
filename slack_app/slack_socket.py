@@ -8,7 +8,7 @@ from database.db import User, ChatHistory
 from slack_sdk.errors import SlackApiError
 from database.db_session import get_session
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-from slack_app.blocks import get_hello_block, get_response_block, get_response_block_with_actions, get_actions_block, get_feedback_block, get_loading_block, get_form_blocks
+from slack_app.blocks import get_hello_block, get_response_block, get_response_block_with_actions, get_actions_block, get_feedback_block, get_loading_block
 
 app = App(token=env.slack.SLACK_TOKEN)
 handler = SocketModeHandler(app, env.slack.SLACK_SOCKET_TOKEN)
@@ -217,62 +217,6 @@ def handle_message(payload, client):
         except SlackApiError as e:
             print("Error sending message: {}".format(e.response["error"]))
 
-@app.action("open_form_button")
-def raise_ticket_form(ack, body, client):
-    ack()
-    
-    form_blocks = get_form_blocks()
-    client.views_open(
-        trigger_id=body["trigger_id"],
-        view={
-            "type": "modal",
-            "private_metadata": json.dumps(body.get("container")),
-            "callback_id": "form_submission",
-            "title": {"type": "plain_text", "text": "Submit a request"},
-            "submit": {"type": "plain_text", "text": "Submit"},
-            "close": {"type": "plain_text", "text": "Cancel"},
-            "blocks": form_blocks
-        }
-    )
-    
-@app.view("form_submission")
-def handle_form_submission(ack, body, client):
-    ack()
-    
-    view = body["view"]
-    user_id = body["user"]["id"]
-    private_metadata = json.loads(view["private_metadata"])
-    message_ts = private_metadata["message_ts"]
-    is_ephemeral = private_metadata["is_ephemeral"]
-    channel_id = private_metadata["channel_id"]
-    
-    if is_ephemeral:
-        client.chat_postEphemeral(
-            channel=channel_id,
-            user=user_id,
-            ts=message_ts,
-            text="Your request has been raised.",
-            blocks=[{
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "Your request has been submitted"
-                }
-            }]
-        )
-    else:
-        client.chat_update(
-            channel=channel_id,
-            text="Your request has been raised.",
-            blocks=[{
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "Your request has been submitted"
-                }
-            }]
-        )
-
 @app.action("feedback_thumbs_down")
 def handle_thumbs_down(ack, body, client):
     ack()
@@ -285,8 +229,10 @@ def handle_thumbs_down(ack, body, client):
     try:
         chat_history = session.query(ChatHistory).filter(
             ChatHistory.channel_id == channel_id,
+            ChatHistory.user_id == user_id,
             ChatHistory.role == "assistant"
         ).first()
+        
         chat_history.neg_feedback = True
         session.commit()
     except Exception as e:
@@ -320,6 +266,7 @@ def handle_thumbs_up(ack, body, client):
     try:
         chat_history = session.query(ChatHistory).filter(
             ChatHistory.channel_id == channel_id,
+            ChatHistory.user_id == user_id,
             ChatHistory.role == "assistant"
         ).first()
 

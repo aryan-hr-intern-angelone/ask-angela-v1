@@ -1,10 +1,11 @@
-import enum
 from datetime import datetime
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql.functions import current_timestamp
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Enum, ForeignKey
+from config.env import env
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey
 
-engine = create_engine('sqlite:///database.db', echo=True)
+db_conn_str = f"postgresql+psycopg2://{env.aws.RDS_USERNAME}:{env.aws.RDS_PASSWORD}@{env.aws.RDS_CONNECTION_URI}:{env.aws.RDS_PORT}/{env.aws.RDS_DATABASE_NAME}"
+engine = create_engine(db_conn_str, echo=True)
 
 Base = declarative_base()
 
@@ -29,12 +30,4 @@ class ChatHistory(Base):
     neg_feedback = Column(Boolean, default=False)
     timestamp = Column(DateTime, default=current_timestamp())
     
-# class Files(Base):
-#     __tablename__ = "files"
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     file_name = Column(String, nullable=False)
-#     size = Column(String, nullable=False)
-#     added_on = Column(DateTime, default=datetime.now())
-#     updated_on = Column(DateTime)
-
 Base.metadata.create_all(engine)

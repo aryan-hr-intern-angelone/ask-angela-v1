@@ -16,6 +16,8 @@ sqlalchemy
 rank_bm25
 requests
 psycopg[binary, pool]
+psycopg2-binary
+rich
 fastembed
 flashrank
 fastapi
